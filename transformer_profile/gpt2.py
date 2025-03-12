@@ -5,7 +5,7 @@ from collections import defaultdict
 import time 
 
 
-def pre_hook(name, start_events): # 闭包，函数修饰器；内部函数可以访问外部函数的变量，避免创建全局变量；使用 my_pre_hook = pre_hook(name, start_event)
+def pre_hook(name, start_events): 
     def hook(module, inputs):
         if torch.cuda.is_available():
             start_event = torch.cuda.Event(enable_timing=True)
@@ -50,7 +50,7 @@ def gpt2_profile(text):
     start_events = {}
 
     for name, module in model.named_modules():
-        if isinstance(module, GPT2Attention): # isinstance() 是 Python 内置的函数，用于检查一个对象是否是某个类型（或多个类型之一）的实例
+        if isinstance(module, GPT2Attention): 
             print(f"Register a hook to: {name}")
             pre_handle = module.register_forward_pre_hook(pre_hook(name, start_events))
             post_handle = module.register_forward_hook(post_hook(name, start_events, attention_times))
