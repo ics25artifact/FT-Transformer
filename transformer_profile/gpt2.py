@@ -5,7 +5,7 @@ from collections import defaultdict
 import time 
 
 
-def pre_hook(name, start_events):
+def pre_hook(name, start_events): # 闭包，函数修饰器；内部函数可以访问外部函数的变量，避免创建全局变量；使用 my_pre_hook = pre_hook(name, start_event)
     def hook(module, inputs):
         if torch.cuda.is_available():
             start_event = torch.cuda.Event(enable_timing=True)
@@ -32,24 +32,25 @@ def post_hook(name, start_events, attention_times):
             attention_times[name] += elapsed
     return hook
 
-def gpt2_profile():
+def gpt2_profile(text):
     print("### GPT-2 Inference Profiling Start ###\n")
     model = GPT2Model.from_pretrained('gpt2')
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+    tokenizer.pad_token = tokenizer.eos_token
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
     model.eval()  
 
-    text = "This is a test input token for gpt2 model." # modify the text according to the input scale you want to test.
-    inputs = tokenizer(text, return_tensors="pt").to(device)
+    # text = "This is a test input token for gpt2 model." # modify the text according to the input scale you want to test.
+    inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True).to(device)
 
     hooks = []
     attention_times = defaultdict(float)
     start_events = {}
 
     for name, module in model.named_modules():
-        if isinstance(module, GPT2Attention):
+        if isinstance(module, GPT2Attention): # isinstance() 是 Python 内置的函数，用于检查一个对象是否是某个类型（或多个类型之一）的实例
             print(f"Register a hook to: {name}")
             pre_handle = module.register_forward_pre_hook(pre_hook(name, start_events))
             post_handle = module.register_forward_hook(post_hook(name, start_events, attention_times))

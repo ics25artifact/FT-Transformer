@@ -32,18 +32,19 @@ def post_hook(name, start_events, attention_times):
             attention_times[name] += elapsed
     return hook
 
-def t5_small_profile():
+def t5_small_profile(text):
     print(f"\n### T5-Small Inference Profiling Start ###\n")
     model = T5Model.from_pretrained("t5-small")
     tokenizer = T5Tokenizer.from_pretrained("t5-small", legacy=True)
+    tokenizer.pad_token = tokenizer.eos_token
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     model.eval()
 
-    text = "This is a test input token for t5-small model." # modify the text according to the input scale you want to test.
-    inputs = tokenizer(text, return_tensors="pt").to(device)
-    decoder_inputs = tokenizer("test decoder inputs", return_tensors="pt").to(device)  
+    # text = "This is a test input token for t5-small model." # modify the text according to the input scale you want to test.
+    inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True).to(device)
+    decoder_inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True).to(device)  
 
     hooks = []
     attention_times = defaultdict(float)

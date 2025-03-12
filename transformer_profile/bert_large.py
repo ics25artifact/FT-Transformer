@@ -32,18 +32,19 @@ def post_hook(name, start_events, attention_times):
             attention_times[name] += elapsed
     return hook
 
-def bert_large_profile():
+def bert_large_profile(text):
     print(f"\n### BERT-Large Inference Profiling Start ###\n")
     
     model = BertModel.from_pretrained("bert-large-uncased") 
     tokenizer = BertTokenizer.from_pretrained("bert-large-uncased")
+    tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     model.eval()
 
-    text = "This is a test sentence for BERT-Large timing analysis " * 10  # modify the text according to the input scale you want to test.
-    inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True).to(device)
+    # text = "This is a test sentence for BERT-Large timing analysis " * 10  # modify the text according to the input scale you want to test.
+    inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True, padding=True).to(device)
 
     hooks = []
     attention_times = defaultdict(float)
